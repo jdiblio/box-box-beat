@@ -22,6 +22,7 @@ const HOWTO={
   typing:{goal:'Four keys, four colour lanes, pure rhythm! First pick a hand, then hit each key exactly as its note reaches the ring. 8 misses ends the run.',
     steps:[['F D S A','Left hand — press any of these to pick this side'],
       ['J K L ;','Right hand — press any of these to pick this side'],
+      ['COMBO','Two rings linked by a line must be hit at the exact same instant — both keys down together'],
       ['TIP','Every finger gets its own colour lane — wrong keys just break your combo']]},
   kitchen:{goal:'12 orders to cook, one move per beat. Miss a beat and the dish BURNS!',
     steps:[['↓','Chop'],['↑','Flip'],['← →','Stir'],
@@ -59,6 +60,10 @@ const CHAMP_HOWTO={ // appended to the normal how-to-play text when the Champion
   drums:{goalSuffix:' CHAMPIONS: two new advanced 16th-note/offbeat lessons, plus a SOLO CHALLENGE — improvise freely but keep the kick locked to the beat.',
     extraSteps:[['6 · 7','Advanced lessons: Funk 16ths and Offbeat Hats'],
       ['8','Solo Challenge — freeform jam, graded on kicks landing on the beat']]},
+  kitchen:{goalSuffix:' CHAMPIONS: the kitchen runs hot from the very first order — every tempo step is noticeably faster than normal.',
+    extraSteps:[['TIP','The pace keeps climbing with every order — stay locked to the beat or the burns pile up fast']]},
+  printer:{goalSuffix:' CHAMPIONS: hit C on the color-swap cue to change the filament — miss it and the wrong color prints into the object.',
+    extraSteps:[['C','Swap the print color right on the cue']]},
 };
 function howtoInfo(MC){
   if(MC===Calibration)return Object.assign({icon:'🎯',name:'TIMING CALIBRATION'},HOWTO.calib);

@@ -34,7 +34,7 @@ const UI={
     const btns=[...el.querySelectorAll('.btn,.card')].filter(b=>!b.classList.contains('hidden'));
     btns.forEach((b,i)=>{
       let chip=b.querySelector('.knum');
-      if(b.querySelector('.star')){if(chip)chip.remove();return;} // star badge already sits in that corner
+      if(b.querySelector('.star')||b.querySelector('.order')){if(chip)chip.remove();return;} // that corner's already got a badge
       if(!chip){chip=document.createElement('span');chip.className='knum';b.appendChild(chip);}
       chip.textContent=i<9?String(i+1):'';
     });

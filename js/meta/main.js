@@ -73,7 +73,9 @@ const Boot={
 function wire(){
   $('#b-race').onclick=()=>Game.start(RaceWeekend);
   $('#b-garage').onclick=()=>UI.show('garage');
-  $('#b-champ').onclick=()=>Championship.start();
+  $('#b-champ').onclick=()=>Championship.showLineup();
+  $('#b-champ-lineup-start').onclick=()=>Championship.start();
+  $('#b-champ-lineup-back').onclick=()=>UI.show('menu');
   $('#b-shop').onclick=()=>UI.show('shop');
   $('#b-stats').onclick=()=>UI.show('stats');
   $('#b-duel').onclick=()=>Game.start(DrumDuel);

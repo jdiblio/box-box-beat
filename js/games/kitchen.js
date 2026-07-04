@@ -58,7 +58,7 @@ class KitchenRush{
         const prevO=this.orders[this.curOrder];
         this.exitDish={dish:prevO.dish,burned:prevO.burned,t:0};
       }
-      this.curOrder=cur;this.cond.setBpm(100+cur*3);
+      this.curOrder=cur;this.cond.setBpm(Math.round((100+cur*3)*Judge.bpmMul()));
       this.dishSwingT=0;this.stripX=0; // new dish slides in fresh
       for(const k of COOK_LANES){this.laneSlide[k]=0;this.laneSlideTarget[k]=0;} // fresh board/bowl/pan
     }
@@ -121,23 +121,24 @@ class KitchenRush{
       ctx.fillText(COOK_LABEL[key],x,H*0.79);
       ctx.font=f(18);ctx.fillText(COOK_ARROW[key],x,H*0.84);
     }
-    // falling prompts — big, glowing, impossible to miss (3x the original size)
+    // falling prompts — big, glowing, impossible to miss, and sized off the
+    // screen width (not a flat pixel count) so they stay huge on any display
     for(const n of this.track.notes){
       if(n.judged&&!n.missed)continue;
       const y=H*0.7-(this.cond.beatToTime(n.beat)-now)/this.cond.spb*H*0.16;
       if(y<H*0.08||y>H*0.78)continue;
-      const x=this.laneX(n.key),r=54;
+      const x=this.laneX(n.key),r=Math.min(78,W*0.115);
       const glowCol=n.missed?'#ff2d2d':n.order.burned?'#5a6478':COOK_COL[n.key];
       ctx.save();
-      ctx.shadowColor=glowCol;ctx.shadowBlur=26;
+      ctx.shadowColor=glowCol;ctx.shadowBlur=30;
       ctx.beginPath();ctx.arc(x,y,r,0,6.283);
       ctx.fillStyle=n.missed?'rgba(225,6,0,.45)':n.order.burned?'#39435a':'#12161f';ctx.fill();
-      ctx.lineWidth=5;ctx.strokeStyle=n.missed?'#ff2d2d':'#ffd400';ctx.stroke();
+      ctx.lineWidth=6;ctx.strokeStyle=n.missed?'#ff2d2d':'#ffd400';ctx.stroke();
       ctx.shadowBlur=0;
-      ctx.lineWidth=2.5;ctx.strokeStyle=glowCol;
-      ctx.beginPath();ctx.arc(x,y,r-7,0,6.283);ctx.stroke();
-      ctx.fillStyle='#eef1f6';ctx.font=f(46,900);ctx.textAlign='center';
-      ctx.fillText(COOK_ARROW[n.key],x,y+16);
+      ctx.lineWidth=3;ctx.strokeStyle=glowCol;
+      ctx.beginPath();ctx.arc(x,y,r-9,0,6.283);ctx.stroke();
+      ctx.fillStyle='#eef1f6';ctx.font=f(Math.min(64,W*0.095),900);ctx.textAlign='center';
+      ctx.fillText(COOK_ARROW[n.key],x,y+18);
       ctx.restore();
     }
     // order ticket + sliding steps strip
