@@ -1,7 +1,9 @@
 /* TYPING RHYTHM — pick a hand (F D S A or J K L ;), then hit each key's colour
  * lane on the beat. Champions swaps this entirely for real sentence typing:
  * capital letters need SHIFT held (checked via Input.isHeld), punctuation is
- * real, and the text randomly "blacks out" so you have to type from memory.
+ * real, the text randomly "blacks out" so you have to type from memory, and
+ * some adjacent letter pairs become combos that must be pressed at the exact
+ * same instant (checked against Input.held, same pattern as Taekwondo).
  * Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
@@ -18,17 +20,26 @@ class TypingRhythm{
     this.cond=new Conductor(Math.round(90*Judge.bpmMul()));
     this.track=new NoteTrack(this.cond);
     this.over=false;this.msg=null;
-    if(this.champ){ // Champions: a full sentence, real punctuation, capitals need SHIFT, and blackouts
+    if(this.champ){ // Champions: a full sentence, real punctuation, capitals need SHIFT, blackouts, and combos
       this.state='play';
       this.sentence=choice(TYPE_SENTENCES);
       this.misses=0;this.maxMiss=10;this.typed=0;
       this.blackout={active:false,t:0,nextAt:Math.floor(rand(6,9))};
       let b=8;
-      for(let i=0;i<this.sentence.length;i++){
-        const ch=this.sentence[i];
-        if(ch===' ')continue;
+      const chars=[];for(let i=0;i<this.sentence.length;i++)if(this.sentence[i]!==' ')chars.push(i);
+      let ci2=0;
+      while(ci2<chars.length){
+        const i=chars[ci2],ch=this.sentence[i];
+        // combo: two adjacent lowercase letters (never ones needing SHIFT) pressed at the exact same instant
+        if(/[a-z]/.test(ch)&&ci2+1<chars.length){
+          const i2=chars[ci2+1],ch2=this.sentence[i2];
+          if(/[a-z]/.test(ch2)&&Math.random()<0.22){
+            this.track.add({beat:b,keys:[this.charKey(ch),this.charKey(ch2)],cis:[i,i2],kind:'combo'});
+            b+=1;ci2+=2;continue;
+          }
+        }
         this.track.add({beat:b,key:this.charKey(ch),kind:'sentence',ci:i,needShift:/[A-Z]/.test(ch)});
-        b+=1;
+        b+=1;ci2++;
       }
       this.lastBeat=b;
     }else{
@@ -61,18 +72,12 @@ class TypingRhythm{
     const lvl=Math.floor(this.done/4);
     const len=Math.min(8,4+Math.floor(lvl/2))+(Judge.dense()?1:0);
     const half=lvl>=3&&!Judge.sparse();
-    const comboChance=Math.min(0.35,0.1+lvl*0.05); // two lane keys pressed at the exact same instant
     const obj={notes:[]};let b=this.nextBeat,last=-1;
     for(let i=0;i<len;i++){
       let li=Math.floor(rand(0,4));
       if(li===last)li=(li+1+Math.floor(rand(0,3)))%4;
       last=li;
-      if(Math.random()<comboChance){
-        let li2=Math.floor(rand(0,4));while(li2===li)li2=Math.floor(rand(0,4));
-        obj.notes.push(this.track.add({beat:b,keys:[this.keys[li],this.keys[li2]],lanes:[li,li2],kind:'combo',burst:obj}));
-      }else{
-        obj.notes.push(this.track.add({beat:b,key:this.keys[li],lane:li,kind:'type',burst:obj}));
-      }
+      obj.notes.push(this.track.add({beat:b,key:this.keys[li],lane:li,kind:'type',burst:obj}));
       b+=(half&&i%2===1)?0.5:1;
     }
     this.nextBeat=b+2;this.bursts.push(obj);
@@ -85,7 +90,8 @@ class TypingRhythm{
     if(this.champ){
       const now=Game.judgedNow(),beat=this.cond.beat;
       this.track.sweep(now,Judge.win().ok,n=>{
-        Game.missAt(this.charX(n.ci),H*0.5);
+        const x=n.kind==='combo'?(this.charX(n.cis[0])+this.charX(n.cis[1]))/2:this.charX(n.ci);
+        Game.missAt(x,H*0.5);
         this.misses++;if(this.misses>=this.maxMiss){if(Store.data.practice){this.misses=0;this.flash('PRACTICE MODE — STRIKES CLEARED','#00d2be');}else this.finish();}
       });
       if(this.over)return;
@@ -97,8 +103,7 @@ class TypingRhythm{
     if(this.state==='pick')return;
     const now=Game.judgedNow();
     this.track.sweep(now,Judge.win().ok,n=>{
-      const y=n.kind==='combo'?(this.laneY(n.lanes[0])+this.laneY(n.lanes[1]))/2:this.laneY(n.lane);
-      Game.missAt(W*0.2,y);
+      Game.missAt(W*0.2,this.laneY(n.lane));
       this.misses++;n.burst.bad=true;
       if(this.misses>=this.maxMiss){if(Store.data.practice){this.misses=0;this.flash('PRACTICE MODE — STRIKES CLEARED','#00d2be');}else this.finish();}
     });
@@ -121,6 +126,24 @@ class TypingRhythm{
   onKeyDown(k,t){
     if(this.over)return;
     if(this.champ){
+      // combo: two adjacent letters that must be pressed at the exact same instant,
+      // checked against real held-key state (Input.held), not just this one keydown event
+      const win=Judge.win().ok;
+      const cn=this.track.notes.find(n=>!n.judged&&n.kind==='combo'&&n.keys.includes(k)&&
+        Math.abs(t-this.cond.beatToTime(n.beat))<=win&&Input.isHeld(n.keys[0])&&Input.isHeld(n.keys[1]));
+      if(cn){
+        cn.judged=true;cn.delta=t-this.cond.beatToTime(cn.beat);
+        const x=(this.charX(cn.cis[0])+this.charX(cn.cis[1]))/2,y=H*0.5;
+        const j=Game.hit(cn.delta,x,y,140);
+        this.typed+=2;
+        if(j==='miss'){this.misses++;if(this.misses>=this.maxMiss){if(Store.data.practice){this.misses=0;this.flash('PRACTICE MODE — STRIKES CLEARED','#00d2be');}else this.finish();}}
+        else FX.text(x,y-30,'COMBO!','#ffd400');
+        if(!this.blackout.active&&this.typed>=this.blackout.nextAt){
+          this.blackout={active:true,t:1.8,nextAt:this.typed+Math.floor(rand(6,9))};
+          FX.text(W/2,H*0.35,'BLACKOUT! TYPE FROM MEMORY',JCOL.ok);
+        }
+        return;
+      }
       const n=this.track.hit(k,t,Judge.win().ok);
       if(!n){this.session.combo=0;AE.tick();return;}
       const x=this.charX(n.ci),y=H*0.5;
@@ -142,19 +165,6 @@ class TypingRhythm{
     if(this.state==='pick'){
       if(TYPE_SETS.left.includes(k))this.pick('left');
       else if(TYPE_SETS.right.includes(k))this.pick('right');
-      return;
-    }
-    // combo notes: two linked lanes that must be pressed at the exact same instant,
-    // checked against real held-key state (Input.held), not just this one keydown event
-    const win=Judge.win().ok;
-    const cn=this.track.notes.find(n=>!n.judged&&n.kind==='combo'&&n.keys.includes(k)&&
-      Math.abs(t-this.cond.beatToTime(n.beat))<=win&&Input.isHeld(n.keys[0])&&Input.isHeld(n.keys[1]));
-    if(cn){
-      cn.judged=true;cn.delta=t-this.cond.beatToTime(cn.beat);
-      const x=this.noteX(cn,t),y=(this.laneY(cn.lanes[0])+this.laneY(cn.lanes[1]))/2;
-      const j=Game.hit(cn.delta,x,y,140);
-      if(j==='miss'){cn.burst.bad=true;this.misses++;if(this.misses>=this.maxMiss){if(Store.data.practice){this.misses=0;this.flash('PRACTICE MODE — STRIKES CLEARED','#00d2be');}else this.finish();}}
-      else FX.text(x,y-30,'COMBO!','#ffd400');
       return;
     }
     const li=this.keys.indexOf(k);
@@ -231,20 +241,6 @@ class TypingRhythm{
       if(n.judged&&!n.missed)continue;
       const x=this.noteX(n,now);
       if(x<W*0.08||x>W+30)continue;
-      if(n.kind==='combo'){ // linked pair: both keys must be down at the exact same instant
-        const y1=this.laneY(n.lanes[0]),y2=this.laneY(n.lanes[1]);
-        ctx.strokeStyle=n.missed?'rgba(225,6,0,.5)':'#ffd400';ctx.lineWidth=3;
-        ctx.beginPath();ctx.moveTo(x,y1);ctx.lineTo(x,y2);ctx.stroke();
-        for(let ki=0;ki<2;ki++){
-          const yy=this.laneY(n.lanes[ki]);
-          ctx.beginPath();ctx.arc(x,yy,19,0,6.283);
-          ctx.fillStyle=n.missed?'rgba(225,6,0,.4)':TYPE_COLS[n.lanes[ki]];ctx.fill();
-          ctx.strokeStyle='#ffd400';ctx.lineWidth=2;ctx.stroke();
-          ctx.fillStyle='#0b0d12';ctx.font=f(16,800);ctx.textAlign='center';
-          ctx.fillText(n.keys[ki],x,yy+6);
-        }
-        continue;
-      }
       const y=this.laneY(n.lane);
       ctx.beginPath();ctx.arc(x,y,17,0,6.283);
       ctx.fillStyle=n.missed?'rgba(225,6,0,.4)':TYPE_COLS[n.lane];ctx.fill();
@@ -263,7 +259,7 @@ class TypingRhythm{
       ctx.globalAlpha=clamp(this.msg.t/0.4,0,1);ctx.textAlign='center';
       ctx.fillStyle=this.msg.c;ctx.font=f(26);ctx.fillText(this.msg.s,W/2,H*0.12);ctx.globalAlpha=1;
     }
-    drawHUD(ctx,this,'hit each key exactly when its note reaches the ring — linked pairs need both keys at once');
+    drawHUD(ctx,this,'hit each key exactly when its note reaches the ring');
     drawCount(ctx,beat);
   }
   renderChamp(ctx){
@@ -279,9 +275,10 @@ class TypingRhythm{
     for(let i=0;i<this.sentence.length;i++){
       const ch=this.sentence[i],x=this.charX(i);
       if(ch===' ')continue;
-      const notesHere=this.track.notes.filter(n=>n.ci===i);
+      const notesHere=this.track.notes.filter(n=>n.ci===i||(n.cis&&n.cis.includes(i)));
       const done=notesHere.every(n=>n.judged&&!n.missed),bad=notesHere.some(n=>n.missed);
-      const isCur=nx&&nx.ci===i;
+      const inCombo=notesHere.some(n=>n.kind==='combo');
+      const isCur=nx&&(nx.ci===i||(nx.cis&&nx.cis.includes(i)));
       if(this.blackout.active&&!done&&!isCur){ // redacted — type from memory
         ctx.fillStyle='#242b3a';ctx.fillRect(x-11,by-14,22,22);
         continue;
@@ -289,13 +286,23 @@ class TypingRhythm{
       ctx.fillStyle=bad?'#e10600':done?'#00d2be':isCur?'#ffd400':'#5a6478';
       ctx.font=f(24,800);
       ctx.fillText(ch,x,by+8);
+      if(isCur&&inCombo){ // combo pair: link the two glowing letters with a bar underneath
+        ctx.strokeStyle='#ffd400';ctx.lineWidth=3;
+        ctx.beginPath();ctx.moveTo(x,by+16);ctx.lineTo(this.charX(nx.cis[nx.cis[0]===i?1:0]),by+16);ctx.stroke();
+      }
     }
     if(this.blackout.active){
       ctx.fillStyle='#ff8a00';ctx.font=f(13,800);
       ctx.fillText('⚠ BLACKOUT — TYPE FROM MEMORY',W/2,by-42);
     }
-    // shift indicator for the current character
-    if(nx){
+    // shift indicator for the current character — or a COMBO callout when it's a linked pair
+    if(nx&&nx.kind==='combo'){
+      const p=beatPulse(this.cond);
+      ctx.beginPath();ctx.arc(W/2,by+70,26+p*5,0,6.283);
+      ctx.strokeStyle='rgba(255,212,0,'+(0.5+p*0.4)+')';ctx.lineWidth=3;ctx.stroke();
+      ctx.fillStyle='#ffd400';ctx.font=f(15,800);
+      ctx.fillText('COMBO — BOTH AT ONCE',W/2,by+76);
+    }else if(nx){
       const needShift=nx.needShift;
       const p=beatPulse(this.cond);
       ctx.beginPath();ctx.arc(W/2,by+70,26+p*5,0,6.283);
@@ -314,7 +321,7 @@ class TypingRhythm{
       ctx.globalAlpha=clamp(this.msg.t/0.4,0,1);ctx.textAlign='center';
       ctx.fillStyle=this.msg.c;ctx.font=f(24);ctx.fillText(this.msg.s,W/2,H*0.16);ctx.globalAlpha=1;
     }
-    drawHUD(ctx,this,'type the sentence exactly — capitals need SHIFT held down');
+    drawHUD(ctx,this,'type the sentence exactly — capitals need SHIFT held, combos need both keys at once');
     drawCount(ctx,beat);
   }
   music(step,t){
