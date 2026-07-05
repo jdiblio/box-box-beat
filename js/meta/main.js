@@ -12,6 +12,7 @@ function refreshSettings(){
     $('#diff-'+d).classList.toggle('sel',Store.data.difficulty===d);
   const unlocked=championsUnlocked();
   $('#diff-champions').classList.toggle('locked-diff',!unlocked);
+  $('#champ-hint').classList.toggle('champ-locked-hint',!unlocked);
   $('#champ-hint').textContent=unlocked
     ?'CHAMPIONS — hardcore versions of every mode. You\'ve earned it.'
     :'🔒 CHAMPIONS unlocks at '+CHAMPIONS_THRESHOLD.toLocaleString()+' lifetime points — you have '+(Store.data.lifetimePoints||0).toLocaleString();
@@ -91,7 +92,11 @@ function wire(){
   for(const d of ['rookie','pro','legend'])
     $('#diff-'+d).onclick=()=>{Store.data.difficulty=d;Store.save();refreshSettings();};
   $('#diff-champions').onclick=()=>{
-    if(!championsUnlocked())return;
+    if(!championsUnlocked()){ // locked — give a clear "denied" shake instead of silently doing nothing
+      const b=$('#diff-champions');b.classList.remove('shake-deny');void b.offsetWidth;b.classList.add('shake-deny');
+      const hint=$('#champ-hint');hint.classList.remove('shake-deny');void hint.offsetWidth;hint.classList.add('shake-deny');
+      return;
+    }
     Store.data.difficulty='champions';Store.save();refreshSettings();
   };
   $('#vol-music').addEventListener('input',e=>{
