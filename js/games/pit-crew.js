@@ -1,7 +1,8 @@
-/* PIT CREW ENDLESS — cars keep arriving forever, tempo climbing every time. On
- * Champions difficulty, cars occasionally double-stack (two at once, alternate
- * between them) and wheel guns can jam, needing a rapid double-tap to clear.
- * Depends on: core/*.js, art/backgrounds.js, art/cars.js. */
+/* PIT CREW ENDLESS — cars keep arriving forever, tempo climbing every time.
+ * Championship-only (champHard(), see conductor.js): cars occasionally
+ * double-stack (two at once, alternate between them) and wheel guns can jam,
+ * needing a rapid double-tap to clear — arcade play never sees either,
+ * regardless of difficulty. Depends on: core/*.js, art/backgrounds.js, art/cars.js. */
 'use strict';
 /* ============================================================
    PIT CREW ENDLESS — cars keep coming, patterns keep speeding up.
@@ -9,8 +10,8 @@
 class PitCrewEndless{
   constructor(){
     this.session=new Session();
-    this.champ=Judge.champ();
-    this.cond=new Conductor(Math.round(100*Judge.bpmMul()));
+    this.champ=champHard();
+    this.cond=new Conductor(Math.round(100*(this.champ?CHAMPIONSHIP_SPEED_MUL:1)));
     this.track=new NoteTrack(this.cond);
     this.health=5;this.cars=0;this.carMisses=0;this.over=false;this.msg=null;
     this.doubleStack=false;this.jamsCleared=0;this.pendingJamKey=null;this.pendingJamT=0;
@@ -71,7 +72,7 @@ class PitCrewEndless{
         this.session.score+=this.doubleStack?450:250;AE.boost();FX.boom(0.12);
         this.flash(this.doubleStack?'DOUBLE STOP PERFECT! +1 TYRE':'PERFECT STOP! +1 TYRE','#00d2be');
       }else this.flash('CAR '+this.cars+' RELEASED');
-      this.cond.setBpm(Math.min(this.champ?230:190,Math.round(100*Judge.bpmMul())+this.cars*4));
+      this.cond.setBpm(Math.min(this.champ?230:190,Math.round(100*(this.champ?CHAMPIONSHIP_SPEED_MUL:1))+this.cars*4));
       this.scheduleCar(Math.ceil(beat)+2);
     }
   }

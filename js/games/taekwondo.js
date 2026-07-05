@@ -1,14 +1,13 @@
 /* TAEKWONDO COMBOS — belt by belt (White..Black), landing 70%+ of the moves to
- * advance. On Champions difficulty the belts extend through nine Black Belt
- * degrees — titled in roman numerals (I DEGREE .. IX DEGREE) and each with
- * its own colour so the climb is unmistakable at a glance, not just a wall
- * of text. Champions does NOT run any faster than the normal ladder tops
- * out — I-III DEGREE reuse BLUE belt speed, IV-VI reuse RED belt speed, and
- * VII-IX reuse BLACK belt speed (see BELTS_CHAMP below). What actually makes
- * Champions harder is the combos: some notes require two keys pressed at the
- * exact same instant (checked against Input.held, not just a single keydown
- * event), and the combo chance and density both climb with degree.
- * Depends on: core/*.js, art/backgrounds.js. */
+ * advance. The nine-degree Black Belt ladder (I DEGREE .. IX DEGREE, titled in
+ * roman numerals, each with its own colour) is CHAMPIONSHIP-ONLY (champHard(),
+ * see conductor.js) — arcade play always stays White..Black regardless of
+ * difficulty. Degree speed climbs GREEN belt tempo up to RED belt tempo (I-III
+ * DEGREE = GREEN, IV-VI = BLUE, VII-IX = RED — see BELTS_CHAMP below), never
+ * reaching BLACK belt speed. What actually makes it harder is the combos: some
+ * notes require two keys pressed at the exact same instant (checked against
+ * Input.held, not just a single keydown event), and the combo chance and
+ * density both climb with degree. Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
    TAEKWONDO COMBOS — J punch · K kick · L block, belt by belt.
@@ -19,12 +18,12 @@ const BELTS=[
   {n:'RED',c:'#e10600',bpm:136},{n:'BLACK',c:'#666a75',bpm:150}];
 const ROMAN_NUMERALS=['I','II','III','IV','V','VI','VII','VIII','IX'];
 const DEGREE_COLORS=['#f2c14e','#eeb23e','#eaa32e','#e6941e','#e2850e','#de6f0a','#da5906','#d64302','#e10600'];
-// Champions speed comes straight from the normal belt ladder — I-III DEGREE = BLUE,
-// IV-VI DEGREE = RED, VII-IX DEGREE = BLACK. The chart itself stays on-beat (quarter
-// notes) with only an occasional 8th note and combo mixed in — degree only nudges
-// how often those two things show up, not the underlying speed or note count.
+// Championship degree speed — I-III DEGREE = GREEN, IV-VI DEGREE = BLUE, VII-IX DEGREE =
+// RED. The chart itself stays on-beat (quarter notes) with only an occasional 8th note
+// and combo mixed in — degree only nudges how often those two things show up, not the
+// underlying speed or note count.
 const BELTS_CHAMP=ROMAN_NUMERALS.map((r,i)=>(
-  {n:r+' DEGREE BLACK BELT',c:DEGREE_COLORS[i],bpm:i<3?BELTS[3].bpm:i<6?BELTS[4].bpm:BELTS[5].bpm,
+  {n:r+' DEGREE BLACK BELT',c:DEGREE_COLORS[i],bpm:i<3?BELTS[2].bpm:i<6?BELTS[3].bpm:BELTS[4].bpm,
     eighth:0.12+i*0.045,combo:0.08+i*0.03}));
 const TKD_KEYS=['J','K','L'];
 const TKD_NAME={J:'PUNCH',K:'KICK',L:'BLOCK'};
@@ -32,7 +31,7 @@ const TKD_COL={J:'#e10600',K:'#ffd400',L:'#2f7df6'};
 class Taekwondo{
   constructor(){
     this.session=new Session();
-    this.champ=Judge.champ();
+    this.champ=champHard();
     this.beltsArr=this.champ?BELTS_CHAMP:BELTS;
     this.cond=new Conductor(this.beltsArr[0].bpm);
     this.track=new NoteTrack(this.cond);

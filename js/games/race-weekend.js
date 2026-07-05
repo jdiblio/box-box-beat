@@ -4,9 +4,9 @@
  * small reminder card fades in on top of normal gameplay (it never blocks
  * input — see renderReminder). Standalone/arcade play always runs at the
  * original base tempo (easy-medium) regardless of difficulty; only an active
- * Championship run applies the Champions-difficulty speed boost (medium-hard)
- * — see the inChampRun check below. Depends on: core/*.js, art/backgrounds.js,
- * art/cars.js. */
+ * Championship run applies the fixed speed boost (medium-hard) — see
+ * champHard()/CHAMPIONSHIP_SPEED_MUL in conductor.js. Depends on: core/*.js,
+ * art/backgrounds.js, art/cars.js. */
 'use strict';
 /* ============================================================
    RACE WEEKEND — the race is the song.
@@ -17,8 +17,8 @@ const WHEEL_KEYS=['Q','W','A','S']; // FL FR RL RR
 class RaceWeekend{
   constructor(){
     this.session=new Session();
-    const inChampRun=typeof Championship!=='undefined'&&Championship.active;
-    this.lapBpm=[126,134,142].map(b=>Math.round(b*(inChampRun?Judge.bpmMul():1)));
+    this.champ=champHard();
+    this.lapBpm=[126,134,142].map(b=>Math.round(b*(this.champ?CHAMPIONSHIP_SPEED_MUL:1)));
     this.cond=new Conductor(this.lapBpm[0]);
     this.track=new NoteTrack(this.cond);
     this.sections=[];this.raceTime=0;this.timeDelta=0;

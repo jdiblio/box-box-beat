@@ -1,14 +1,14 @@
 /* MORSE MELODY — taps and holds that spell real words in real Morse code, with
  * a full A-Z reference chart on screen. The three-sentence Morse-timing variant
- * is CHAMPIONSHIP-ONLY, not a plain Champions-difficulty thing: standalone/
- * arcade play always gives the normal short-word game, even on Champions
+ * is CHAMPIONSHIP-ONLY (champHard(), see conductor.js): standalone/arcade play
+ * always gives the normal short-word game, at base speed, regardless of
  * difficulty — it only switches over while an actual Championship run is in
- * progress (Championship.active) AND Champions difficulty is selected. When
- * it's on: real Morse timing ratios (dash = 3x a dot, proper letter/word gaps)
- * and THREE sentences back to back, each drawn from a 36-line Morse/telegraph-
- * themed bank (MORSE_SENTENCES) via a shuffle bag (drawMorseSentence — see
- * makeBag() in utils.js), so no repeats within a round and no repeats across
- * rounds until the whole bank has cycled. Depends on: core/*.js, art/backgrounds.js. */
+ * progress. When it's on: real Morse timing ratios (dash = 3x a dot, proper
+ * letter/word gaps) and THREE sentences back to back, each drawn from a
+ * 36-line Morse/telegraph-themed bank (MORSE_SENTENCES) via a shuffle bag
+ * (drawMorseSentence — see makeBag() in utils.js), so no repeats within a
+ * round and no repeats across rounds until the whole bank has cycled.
+ * Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
    MORSE MELODY — taps and holds that spell real words in Morse.
@@ -17,8 +17,9 @@ const MORSE={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:
   J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',
   T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..'};
 const MORSE_WORDS=['SOS','RACE','BOX','WIN','FAST','PIT','GRID','CODE','HELP','BEAT','CAR','GO'];
-// 36 Morse/telegraph-themed sentences for Champions — letters and spaces only (the MORSE
-// table above has no code for punctuation), a separate bank from Typing Rhythm's racing bank.
+// 36 Morse/telegraph-themed sentences for the Championship sentence variant — letters and
+// spaces only (the MORSE table above has no code for punctuation), a separate bank from
+// Typing Rhythm's racing bank.
 const MORSE_SENTENCES=[
   'SOS MEANS SAVE OUR SHIP','MORSE SENT THE FIRST MESSAGE','DOTS AND DASHES SPELL LETTERS',
   'THE TELEGRAPH CHANGED THE WORLD','HAM RADIO NEVER WENT SILENT','TITANIC SENT A DISTRESS CALL',
@@ -37,10 +38,9 @@ const drawMorseSentence=makeBag(MORSE_SENTENCES);
 class MorseMelody{
   constructor(){
     this.session=new Session();
-    const inChampRun=typeof Championship!=='undefined'&&Championship.active;
     // the 3-sentence Morse-timing variant is Championship-only — arcade/standalone always plays the normal short-word game
-    this.champ=Judge.champ()&&inChampRun;
-    this.cond=new Conductor(Math.round(80*(inChampRun?Judge.bpmMul():1)));
+    this.champ=champHard();
+    this.cond=new Conductor(Math.round(80*(this.champ?CHAMPIONSHIP_SPEED_MUL:1)));
     this.track=new NoteTrack(this.cond);
     this.words=[];this.over=false;this.pendingDash=null;this.spaceDown=false;
     let b=8;

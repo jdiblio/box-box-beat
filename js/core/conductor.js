@@ -57,7 +57,7 @@ class NoteTrack{
 }
 
 /* ================= JUDGMENT ================= */
-const CHAMPIONS_THRESHOLD=6000; // lifetime points needed to unlock the Champions tier
+const CHAMPIONS_THRESHOLD=6000; // lifetime points needed to unlock the Champions difficulty tier
 function championsUnlocked(){return (Store.data.lifetimePoints||0)>=CHAMPIONS_THRESHOLD;}
 const Judge={
   win(){
@@ -74,9 +74,16 @@ const Judge={
   },
   dense(){return Store.data.difficulty==='legend'||Store.data.difficulty==='champions';}, // extra notes on Legend+
   sparse(){return Store.data.difficulty==='rookie';},
-  champ(){return Store.data.difficulty==='champions';},
-  bpmMul(){return this.champ()?1.28:1;}, // Champions runs everything hotter
+  bpmMul(){return Store.data.difficulty==='champions'?1.28:1;}, // used only by 2P Drum Duel's own difficulty-driven speed
 };
+// Championship-only "hard content" switch. True only while an actual Championship run is
+// in progress — NOT tied to which difficulty tier is selected. Difficulty (Judge.win(),
+// above) is a separate, purely fairness-related axis that applies the same whether you're
+// in the arcade or a Championship run. Every mode's hardcore variant (Taekwondo's degrees,
+// Kitchen/Pit Crew/Printer's faster pace, Drum Kit's extra lessons, Typing/Morse's sentence
+// content) is gated on champHard(), so arcade never shows it and Championship always does.
+function champHard(){return typeof Championship!=='undefined'&&Championship.active;}
+const CHAMPIONSHIP_SPEED_MUL=1.18; // fixed tempo boost for Championship's hard content, independent of difficulty
 
 /* ================= SESSION — per-run combo/score/accuracy ================= */
 class Session{

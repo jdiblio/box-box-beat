@@ -6,10 +6,11 @@
  * wide for the car, a thin stem into a sudden wide cup for the trophy, one
  * huge sideways flare for the glider's wingspan, etc.) so each object reads
  * as genuinely different from the others instead of "a vase every time."
- * Champions is the same shapes, just faster (Judge.bpmMul()) — there is no
- * color-swap mechanic; an earlier version had one but it never read clearly
- * (miss/ok layers always forced red/orange over it) so it's gone entirely.
- * Depends on: core/*.js, art/backgrounds.js. */
+ * Championship (champHard(), see conductor.js) is the same shapes, just at a
+ * fixed faster pace — arcade play is always the base tempo, regardless of
+ * difficulty. There is no color-swap mechanic; an earlier version had one but
+ * it never read clearly (miss/ok layers always forced red/orange over it) so
+ * it's gone entirely. Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
    PRINT HEAD HERO — a real 3D printer builds a SURPRISE object,
@@ -68,8 +69,8 @@ const PRINT_SHAPES=[ // each shape: r(t) is the main silhouette half-width 0..1 
 class PrintHeadHero{
   constructor(){
     this.session=new Session();
-    this.champ=Judge.champ();
-    this.baseBpm=Math.round(110*Judge.bpmMul());
+    this.champ=champHard();
+    this.baseBpm=Math.round(110*(this.champ?CHAMPIONSHIP_SPEED_MUL:1));
     this.cond=new Conductor(this.baseBpm);
     this.track=new NoteTrack(this.cond);
     this.shape=choice(PRINT_SHAPES); // a different surprise every run

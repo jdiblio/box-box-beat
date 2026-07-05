@@ -1,8 +1,10 @@
 /* FREESTYLE DRUM KIT — every key on the keyboard is a different drum sound.
  * Lessons teach classic patterns; free play is just a metronome and a canvas
- * full of drum pads. Champions adds two advanced 16th-note lessons and a Solo
- * Challenge that grades you on keeping the kick locked to the beat while you
- * improvise everything else. Depends on: core/*.js, art/backgrounds.js. */
+ * full of drum pads. Championship-only (champHard(), see conductor.js): two
+ * advanced 16th-note lessons and a Solo Challenge that grades you on keeping
+ * the kick locked to the beat while you improvise everything else — arcade
+ * play never sees these, regardless of difficulty.
+ * Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
    FREESTYLE DRUM KIT — every keyboard row is a drum voice.
@@ -17,7 +19,7 @@ const LESSONS=[
   {name:'BOOM BAP',bpm:90,steps:[[0,'Z'],[4,'A'],[6,'Z'],[9,'Z'],[12,'A'],[14,'D']]},
   {name:'DISCO',bpm:118,steps:[[0,'Z'],[2,'5'],[4,'S'],[6,'5'],[7,'N'],[8,'Z'],[10,'5'],[12,'S'],[14,'5'],[15,'N']]},
 ];
-const LESSONS_CHAMP=[ // Champions: real 16th-note grooves and offbeat hi-hats
+const LESSONS_CHAMP=[ // Championship-only: real 16th-note grooves and offbeat hi-hats
   {name:'FUNK 16THS',bpm:104,steps:[[0,'Z'],[2,'2'],[3,'2'],[4,'A'],[6,'2'],[7,'2'],[8,'Z'],[9,'Z'],
     [10,'2'],[12,'A'],[14,'2'],[15,'2']]},
   {name:'OFFBEAT HATS',bpm:112,steps:[[0,'Z'],[1,'2'],[3,'2'],[4,'A'],[5,'2'],[7,'2'],[8,'Z'],[9,'2'],
@@ -26,7 +28,7 @@ const LESSONS_CHAMP=[ // Champions: real 16th-note grooves and offbeat hi-hats
 class DrumKit{
   constructor(){
     this.session=new Session();
-    this.champ=Judge.champ();
+    this.champ=champHard();
     this.lessonList=LESSONS.concat(this.champ?LESSONS_CHAMP:[]);
     this.cond=new Conductor(100);
     this.track=new NoteTrack(this.cond);

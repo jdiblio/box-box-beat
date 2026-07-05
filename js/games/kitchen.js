@@ -1,7 +1,10 @@
 /* KITCHEN RUSH — twelve orders, one cooking move per beat, arrows big enough to
  * read at a glance. The dish for each order swings into view, and hitting a
  * move plays a small Cooking-Mama-style animation (knife chop, spoon stir, pan
- * flip) right at that station. Depends on: core/*.js, art/backgrounds.js. */
+ * flip) right at that station. Championship-only: the kitchen runs at a fixed
+ * faster pace (CHAMPIONSHIP_SPEED_MUL, see conductor.js) whenever an actual
+ * Championship run is in progress (champHard()) — arcade play is always the
+ * base tempo, regardless of difficulty. Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
    KITCHEN RUSH — chop / flip / stir on the beat, don't burn it.
@@ -17,7 +20,8 @@ const COOK_ICON={UP:'🍳',DOWN:'🔪',LEFT:'🥄',RIGHT:'🥄'};
 class KitchenRush{
   constructor(){
     this.session=new Session();
-    this.cond=new Conductor(Math.round(100*Judge.bpmMul()));
+    this.champ=champHard();
+    this.cond=new Conductor(Math.round(100*(this.champ?CHAMPIONSHIP_SPEED_MUL:1)));
     this.track=new NoteTrack(this.cond);
     this.orders=[];this.over=false;this.msg=null;this.flame=0;this.curOrder=-1;
     this.dishSwingT=0;this.stripX=0;this.exitDish=null;
@@ -58,7 +62,7 @@ class KitchenRush{
         const prevO=this.orders[this.curOrder];
         this.exitDish={dish:prevO.dish,burned:prevO.burned,t:0};
       }
-      this.curOrder=cur;this.cond.setBpm(Math.round((100+cur*3)*Judge.bpmMul()));
+      this.curOrder=cur;this.cond.setBpm(Math.round((100+cur*3)*(this.champ?CHAMPIONSHIP_SPEED_MUL:1)));
       this.dishSwingT=0;this.stripX=0; // new dish slides in fresh
       for(const k of COOK_LANES){this.laneSlide[k]=0;this.laneSlideTarget[k]=0;} // fresh board/bowl/pan
     }
