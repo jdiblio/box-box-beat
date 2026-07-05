@@ -22,6 +22,11 @@ function refreshSettings(){
   $('#vol-music').value=Math.round(Store.data.volMusic*100);
   $('#vol-sfx').value=Math.round(Store.data.volSfx*100);
   $('#b-practice').textContent='Practice Mode: '+(Store.data.practice?'ON (no game overs)':'OFF');
+  const devOn=MODES.every(m=>Store.data.beaten[m.id]);
+  $('#dev-hint').classList.toggle('dev-on',devOn);
+  $('#dev-hint').textContent=devOn
+    ?'✅ DEV MODE ON — unlimited points, every mode and Champions unlocked'
+    :'testing tool: unlocks every mode (and Champions) and sets points to 999,999,999';
 }
 
 /* ================= BOOT + MAIN LOOP ================= */
@@ -106,6 +111,12 @@ function wire(){
     Store.data.volSfx=e.target.value/100;Store.save();if(AE.sfxg)AE.sfxg.gain.value=Store.data.volSfx;
   });
   $('#b-practice').onclick=()=>{Store.data.practice=!Store.data.practice;Store.save();refreshSettings();};
+  $('#b-dev').onclick=()=>{ // testing tool: unlimited points, every mode (and Champions) unlocked
+    Store.data.points=999999999;
+    Store.data.lifetimePoints=Math.max(Store.data.lifetimePoints||0,999999999);
+    for(const m of MODES)Store.data.beaten[m.id]=true;
+    Store.save();refreshSettings();
+  };
   $('#b-reset').onclick=e=>{
     const b=e.currentTarget;
     if(b.dataset.arm){Store.reset();delete b.dataset.arm;b.textContent='Reset All Progress';UI.show('menu');}

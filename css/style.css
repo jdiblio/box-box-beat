@@ -130,6 +130,7 @@ h2 .accent{color:var(--red)}
 .setgroup{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .btn.locked-diff{opacity:.4;border-left-color:var(--dim);cursor:default}
 .btn.locked-diff:hover{transform:none;background:var(--panel)}
+#dev-hint.dev-on{color:var(--teal);font-weight:700}
 .champ-locked-hint{color:var(--orange)!important;font-weight:700}
 .shake-deny{animation:shakeDeny .4s}
 @keyframes shakeDeny{
