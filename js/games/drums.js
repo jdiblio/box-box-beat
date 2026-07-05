@@ -117,6 +117,7 @@ class DrumKit{
       else if(this.champ&&k==='6')this.startLesson(4);
       else if(this.champ&&k==='7')this.startLesson(5);
       else if(this.champ&&k==='8')this.startSolo();
+      else if(k==='V'){Game.start(DrumDuel);return;} // Player vs Player — hands off to 2P Drum Duel (shows its own how-to-play first)
       else if((this.champ&&k==='9')||(!this.champ&&k==='6'))this.finish();
       return;
     }
@@ -161,10 +162,12 @@ class DrumKit{
       const opts=['1 · FREE PLAY','2 · LESSON: ROCK BEAT','3 · LESSON: FOUR ON THE FLOOR',
         '4 · LESSON: BOOM BAP','5 · LESSON: DISCO'];
       if(this.champ)opts.push('6 · LESSON: FUNK 16THS','7 · LESSON: OFFBEAT HATS','8 · SOLO CHALLENGE');
+      opts.push('V · PLAYER VS PLAYER');
       opts.push((this.champ?'9':'6')+' · FINISH & SAVE SCORE');
-      ctx.font=f(Math.min(19,W*0.024+8));
-      opts.forEach((o,i)=>{ctx.fillStyle=i===opts.length-1?'#00d2be':(this.champ&&i>=5&&i<=7)?'#ff8a00':'#eef1f6';
-        ctx.fillText(o,W/2,H*0.24+i*H*0.058);});
+      ctx.font=f(Math.min(18,W*0.022+7));
+      opts.forEach((o,i)=>{
+        ctx.fillStyle=o[0]==='V'?'#e10600':i===opts.length-1?'#00d2be':(this.champ&&/^[6-8]/.test(o))?'#ff8a00':'#eef1f6';
+        ctx.fillText(o,W/2,H*0.23+i*H*0.05);});
       ctx.fillStyle='#8b94a7';ctx.font=f(13,600);
       ctx.fillText('score in lessons to bank points · every key is a drum',W/2,H*0.72);
       if(this.msg){ctx.fillStyle=this.msg.c;ctx.font=f(22);ctx.fillText(this.msg.s,W/2,H*0.8);}
