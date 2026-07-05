@@ -65,19 +65,24 @@ const CHAMP_HOWTO={ // appended to the normal how-to-play text when the Champion
   printer:{goalSuffix:' CHAMPIONS: the printer runs hot from the start — every tempo step is noticeably faster than normal.',
     extraSteps:[]},
 };
+// typing/morse's hardcore content is Championship-only (see their file headers) — every
+// other mode's Champions content is available any time Champions difficulty is selected
+const CHAMPIONSHIP_ONLY_HARD=new Set(['typing','morse']);
 function howtoInfo(MC){
   if(MC===Calibration)return Object.assign({icon:'🎯',name:'TIMING CALIBRATION'},HOWTO.calib);
   if(MC===DrumDuel)return Object.assign({icon:'🥁',name:'2P DRUM DUEL'},HOWTO.duel);
   const m=MODES.find(x=>x.cls===MC);
   if(!m||!HOWTO[m.id])return null;
   const base=Object.assign({icon:m.icon,name:m.name},HOWTO[m.id]);
-  if(Judge.champ()&&CHAMP_HOWTO[m.id]){
+  const inChampRun=typeof Championship!=='undefined'&&Championship.active;
+  const champHard=Judge.champ()&&(!CHAMPIONSHIP_ONLY_HARD.has(m.id)||inChampRun);
+  if(champHard&&CHAMP_HOWTO[m.id]){
     const extra=CHAMP_HOWTO[m.id];
     base.goal=base.goal+(extra.goalSuffix||'');
     base.steps=base.steps.concat(extra.extraSteps||[]);
     base.name='CHAMPIONS — '+base.name;
   }
-  if(typeof Championship!=='undefined'&&Championship.active){
+  if(inChampRun){
     base.name='🏆 SEASON '+(Championship.idx+1)+'/'+Championship.queue.length+' — '+base.name;
     base.goal='Playing on '+Store.data.difficulty.toUpperCase()+' difficulty. '+base.goal;
   }

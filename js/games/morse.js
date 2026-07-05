@@ -1,10 +1,14 @@
 /* MORSE MELODY — taps and holds that spell real words in real Morse code, with
- * a full A-Z reference chart on screen. Champions switches to real Morse timing
- * ratios (dash = 3x a dot, proper letter/word gaps) and plays THREE sentences
- * back to back, each drawn from a 36-line Morse/telegraph-themed bank
- * (MORSE_SENTENCES) via a shuffle bag (drawMorseSentence — see makeBag() in
- * utils.js), so no repeats within a round and no repeats across rounds until
- * the whole bank has cycled. Depends on: core/*.js, art/backgrounds.js. */
+ * a full A-Z reference chart on screen. The three-sentence Morse-timing variant
+ * is CHAMPIONSHIP-ONLY, not a plain Champions-difficulty thing: standalone/
+ * arcade play always gives the normal short-word game, even on Champions
+ * difficulty — it only switches over while an actual Championship run is in
+ * progress (Championship.active) AND Champions difficulty is selected. When
+ * it's on: real Morse timing ratios (dash = 3x a dot, proper letter/word gaps)
+ * and THREE sentences back to back, each drawn from a 36-line Morse/telegraph-
+ * themed bank (MORSE_SENTENCES) via a shuffle bag (drawMorseSentence — see
+ * makeBag() in utils.js), so no repeats within a round and no repeats across
+ * rounds until the whole bank has cycled. Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
    MORSE MELODY — taps and holds that spell real words in Morse.
@@ -33,8 +37,10 @@ const drawMorseSentence=makeBag(MORSE_SENTENCES);
 class MorseMelody{
   constructor(){
     this.session=new Session();
-    this.champ=Judge.champ();
-    this.cond=new Conductor(Math.round(80*Judge.bpmMul()));
+    const inChampRun=typeof Championship!=='undefined'&&Championship.active;
+    // the 3-sentence Morse-timing variant is Championship-only — arcade/standalone always plays the normal short-word game
+    this.champ=Judge.champ()&&inChampRun;
+    this.cond=new Conductor(Math.round(80*(inChampRun?Judge.bpmMul():1)));
     this.track=new NoteTrack(this.cond);
     this.words=[];this.over=false;this.pendingDash=null;this.spaceDown=false;
     let b=8;

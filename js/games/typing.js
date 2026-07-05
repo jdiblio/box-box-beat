@@ -1,8 +1,12 @@
 /* TYPING RHYTHM — pick a hand (F D S A or J K L ;), then hit each key's colour
- * lane on the beat. Champions swaps this entirely for real sentence typing at
- * a slower, more deliberate pace: one lowercase letter at a time, on the beat,
- * no SHIFT, no simultaneous inputs — the challenge is the sentence itself, not
- * the mechanics. Sentences are drawn from a 36-line racing-themed bank
+ * lane on the beat. Sentence typing is a CHAMPIONSHIP-ONLY thing, not a plain
+ * Champions-difficulty thing: playing this mode standalone from the arcade
+ * always gives you the normal word/lane game, even on Champions difficulty —
+ * the sentence variant only kicks in while an actual Championship run is in
+ * progress (Championship.active) AND Champions difficulty is selected. When
+ * it's on: one lowercase letter at a time, on the beat, no SHIFT, no
+ * simultaneous inputs — the challenge is the sentence itself, not the
+ * mechanics. Sentences are drawn from a 36-line racing-themed bank
  * (TYPE_SENTENCES) via a shuffle bag (drawTypeSentence — see makeBag() in
  * utils.js) so the same line doesn't repeat until the whole bank has cycled.
  * Depends on: core/*.js, art/backgrounds.js. */
@@ -32,8 +36,10 @@ const drawTypeSentence=makeBag(TYPE_SENTENCES);
 class TypingRhythm{
   constructor(){
     this.session=new Session();
-    this.champ=Judge.champ();
-    this.cond=new Conductor(this.champ?76:Math.round(90*Judge.bpmMul()));
+    const inChampRun=typeof Championship!=='undefined'&&Championship.active;
+    // sentence typing is Championship-only — arcade/standalone always plays the normal word/lane game
+    this.champ=Judge.champ()&&inChampRun;
+    this.cond=new Conductor(this.champ?76:Math.round(90*(inChampRun?Judge.bpmMul():1)));
     this.track=new NoteTrack(this.cond);
     this.over=false;this.msg=null;
     if(this.champ){ // Champions: a full sentence from the racing bank, slower, one letter at a time, with blackouts

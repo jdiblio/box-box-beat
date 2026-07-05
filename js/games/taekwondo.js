@@ -20,10 +20,12 @@ const BELTS=[
 const ROMAN_NUMERALS=['I','II','III','IV','V','VI','VII','VIII','IX'];
 const DEGREE_COLORS=['#f2c14e','#eeb23e','#eaa32e','#e6941e','#e2850e','#de6f0a','#da5906','#d64302','#e10600'];
 // Champions speed comes straight from the normal belt ladder — I-III DEGREE = BLUE,
-// IV-VI DEGREE = RED, VII-IX DEGREE = BLACK. Only the combo density actually climbs by degree.
+// IV-VI DEGREE = RED, VII-IX DEGREE = BLACK. The chart itself stays on-beat (quarter
+// notes) with only an occasional 8th note and combo mixed in — degree only nudges
+// how often those two things show up, not the underlying speed or note count.
 const BELTS_CHAMP=ROMAN_NUMERALS.map((r,i)=>(
   {n:r+' DEGREE BLACK BELT',c:DEGREE_COLORS[i],bpm:i<3?BELTS[3].bpm:i<6?BELTS[4].bpm:BELTS[5].bpm,
-    dbl:0.32+i*0.045,combo:0.1+i*0.05}));
+    eighth:0.12+i*0.045,combo:0.08+i*0.03}));
 const TKD_KEYS=['J','K','L'];
 const TKD_NAME={J:'PUNCH',K:'KICK',L:'BLOCK'};
 const TKD_COL={J:'#e10600',K:'#ffd400',L:'#2f7df6'};
@@ -46,16 +48,17 @@ class Taekwondo{
   scheduleBelt(bi,startBeat){
     this.track.clear();
     this.beltStart=startBeat;this.beltEnd=startBeat+32;
-    if(this.champ){ // Champions: denser 8th-note chains + simultaneous two-key combos
+    if(this.champ){ // Champions: on-beat quarter notes, with an occasional 8th note or combo mixed in
       const cb=this.beltsArr[bi];
-      const dens=[0,0.5,1,1.5,2,2.5,3,3.5];
-      for(let bar=0;bar<8;bar++)for(const bb of dens){
+      for(let bar=0;bar<8;bar++)for(const bb of[0,1,2,3]){
         const bt=startBeat+bar*4+bb;
         if(Math.random()<cb.combo){
           const a=choice(TKD_KEYS);let b2=choice(TKD_KEYS);while(b2===a)b2=choice(TKD_KEYS);
           this.track.add({beat:bt,keys:[a,b2],kind:'tkd2'});
-        }else this.track.add({beat:bt,key:choice(TKD_KEYS),kind:'tkd'});
-        if(Math.random()<cb.dbl)this.track.add({beat:bt+0.25,key:choice(TKD_KEYS),kind:'tkd'});
+        }else{
+          this.track.add({beat:bt,key:choice(TKD_KEYS),kind:'tkd'});
+          if(Math.random()<cb.eighth)this.track.add({beat:bt+0.5,key:choice(TKD_KEYS),kind:'tkd'});
+        }
       }
     }else{
       const dens=[[0,2],[0,1,2],[0,1,2,3],[0,1,2,3],[0,1,2,3],[0,1,2,3]][bi];
