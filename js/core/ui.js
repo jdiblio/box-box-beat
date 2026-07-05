@@ -71,9 +71,12 @@ function spawnConfetti(container){
   }
 }
 const Results={
-  res:null,
+  res:null,saved:false,
   show(res){
     this.res=res;
+    this.saved=false; // a genuinely new run — the save button is live again (see saveInitials())
+    const saveBtn=$('#b-hs-save');
+    saveBtn.disabled=false;saveBtn.textContent='Save';saveBtn.classList.remove('saved-disabled');
     Store.addPoints(res.points||0);
     if(res.modeId){ // aggregate stats for the Stats/Achievements screen
       Store.data.plays[res.modeId]=(Store.data.plays[res.modeId]||0)+1;
@@ -150,11 +153,16 @@ const Results={
     return h+'</div>';
   },
   saveInitials(){
-    if(!this.res)return;
+    if(!this.res||this.saved)return; // one save per run — repeat clicks are ignored once saved
     const v=($('#hs-initials').value||'ACE').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3)||'ACE';
     Scores.add(this.res.modeId,v,this.res.score);
-    $('#hs-entry').classList.add('hidden');
-    this.show(Object.assign({},this.res,{points:0})); // re-render list without re-awarding points
+    this.saved=true;
+    const btn=$('#b-hs-save');
+    btn.disabled=true;btn.textContent='Saved';btn.classList.add('saved-disabled');
+    // patch just the best-scores line in place — no re-render, so points/unlocks aren't re-awarded
+    const list=$('#results-box .hslist'),html=this.hsHtml(this.res.modeId);
+    if(list)list.outerHTML=html;
+    else if(html)$('#results-box').insertAdjacentHTML('beforeend',html);
   },
 };
 

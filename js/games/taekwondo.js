@@ -2,8 +2,12 @@
  * advance. On Champions difficulty the belts extend through nine Black Belt
  * degrees — titled in roman numerals (I DEGREE .. IX DEGREE) and each with
  * its own colour so the climb is unmistakable at a glance, not just a wall
- * of text — and some notes require two keys pressed at the exact same
- * instant (checked against Input.held, not just a single keydown event).
+ * of text. Champions does NOT run any faster than the normal ladder tops
+ * out — I-III DEGREE reuse BLUE belt speed, IV-VI reuse RED belt speed, and
+ * VII-IX reuse BLACK belt speed (see BELTS_CHAMP below). What actually makes
+ * Champions harder is the combos: some notes require two keys pressed at the
+ * exact same instant (checked against Input.held, not just a single keydown
+ * event), and the combo chance and density both climb with degree.
  * Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
@@ -15,8 +19,11 @@ const BELTS=[
   {n:'RED',c:'#e10600',bpm:136},{n:'BLACK',c:'#666a75',bpm:150}];
 const ROMAN_NUMERALS=['I','II','III','IV','V','VI','VII','VIII','IX'];
 const DEGREE_COLORS=['#f2c14e','#eeb23e','#eaa32e','#e6941e','#e2850e','#de6f0a','#da5906','#d64302','#e10600'];
+// Champions speed comes straight from the normal belt ladder — I-III DEGREE = BLUE,
+// IV-VI DEGREE = RED, VII-IX DEGREE = BLACK. Only the combo density actually climbs by degree.
 const BELTS_CHAMP=ROMAN_NUMERALS.map((r,i)=>(
-  {n:r+' DEGREE BLACK BELT',c:DEGREE_COLORS[i],bpm:150+i*11,dbl:0.32+i*0.045,combo:0.1+i*0.05}));
+  {n:r+' DEGREE BLACK BELT',c:DEGREE_COLORS[i],bpm:i<3?BELTS[3].bpm:i<6?BELTS[4].bpm:BELTS[5].bpm,
+    dbl:0.32+i*0.045,combo:0.1+i*0.05}));
 const TKD_KEYS=['J','K','L'];
 const TKD_NAME={J:'PUNCH',K:'KICK',L:'BLOCK'};
 const TKD_COL={J:'#e10600',K:'#ffd400',L:'#2f7df6'};

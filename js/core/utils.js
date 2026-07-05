@@ -21,6 +21,16 @@ const lerp=(a,b,k)=>a+(b-a)*k;
 const rand=(a,b)=>a+Math.random()*(b-a);
 const choice=a=>a[Math.floor(Math.random()*a.length)];
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+// a "shuffle bag": draws items from a shuffled copy of the list with no repeats until
+// every item has been drawn once, then reshuffles — used for sentence banks so the same
+// line doesn't come up again until the whole bank has cycled through
+function makeBag(items){
+  let bag=[];
+  return function draw(){
+    if(!bag.length)bag=shuffle(items);
+    return bag.pop();
+  };
+}
 function fmtTime(s){s=Math.max(0,s);const m=Math.floor(s/60),r=s-m*60;return m+':'+(r<10?'0':'')+r.toFixed(2);}
 function on(pat,i){return pat[i%pat.length]==='x';}
 const FONT="'Segoe UI',sans-serif";

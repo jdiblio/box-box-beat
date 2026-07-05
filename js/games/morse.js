@@ -1,7 +1,10 @@
 /* MORSE MELODY — taps and holds that spell real words in real Morse code, with
  * a full A-Z reference chart on screen. Champions switches to real Morse timing
- * ratios (dash = 3x a dot, proper letter/word gaps) and spells a whole sentence
- * instead of single words. Depends on: core/*.js, art/backgrounds.js. */
+ * ratios (dash = 3x a dot, proper letter/word gaps) and plays THREE sentences
+ * back to back, each drawn from a 36-line Morse/telegraph-themed bank
+ * (MORSE_SENTENCES) via a shuffle bag (drawMorseSentence — see makeBag() in
+ * utils.js), so no repeats within a round and no repeats across rounds until
+ * the whole bank has cycled. Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
    MORSE MELODY — taps and holds that spell real words in Morse.
@@ -10,8 +13,23 @@ const MORSE={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:
   J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',
   T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..'};
 const MORSE_WORDS=['SOS','RACE','BOX','WIN','FAST','PIT','GRID','CODE','HELP','BEAT','CAR','GO'];
-const MORSE_SENTENCES=['SPEED WINS RACES','HOLD YOUR LINE','PUSH TO THE LIMIT',
-  'APEX THE CORNER','DRIVE LIKE A CHAMPION','BOX BOX BOX NOW'];
+// 36 Morse/telegraph-themed sentences for Champions — letters and spaces only (the MORSE
+// table above has no code for punctuation), a separate bank from Typing Rhythm's racing bank.
+const MORSE_SENTENCES=[
+  'SOS MEANS SAVE OUR SHIP','MORSE SENT THE FIRST MESSAGE','DOTS AND DASHES SPELL LETTERS',
+  'THE TELEGRAPH CHANGED THE WORLD','HAM RADIO NEVER WENT SILENT','TITANIC SENT A DISTRESS CALL',
+  'THE KEY CLICKS WITH EVERY LETTER','WIRELESS OPERATORS WORKED ALL NIGHT','THE BEACON FLASHED IN CODE',
+  'MORSE CROSSED THE OCEAN BY CABLE','NAVY SIGNALMEN FLASHED THE LAMP','AVIATION BEACONS BROADCAST THEIR CODE',
+  'THE OPERATOR LISTENED FOR THE PATTERN','A DOT AND A DASH MAKE LETTERS','THE WIRELESS ROOM WENT SILENT',
+  'SPIES HID CODE IN THE STATIC','THE LINE STRETCHED ACROSS THE PLAINS','RADIO SILENCE BROKE AT DAWN',
+  'THE CODE BREAKER FOUND THE PATTERN','AMATEUR OPERATORS TALK IN CODE','THE BEACON PULSED AT DAWN',
+  'MORSE TAUGHT THE WORLD TO SIGNAL','THE SUBMARINE SENT ITS REPORT','FIELD RADIOS CARRIED CODE TO THE FRONT',
+  'THE OPERATOR TAPPED THE FINAL LETTER','SHIPS STILL CARRY MORSE TODAY','THE ANTENNA HUMMED WITH THE SIGNAL',
+  'EVERY LETTER HAS ITS OWN PATTERN','THE OFFICE BUZZED WITH INCOMING CODE','PILOTS ONCE FLEW BY MORSE BEACONS',
+  'THE OPERATOR TRAINED FOR YEARS','STATIC FILLED THE LINE AT NIGHT','THE LAST TELEGRAM SAID STOP STOP',
+  'SAMUEL MORSE BUILT THE FIRST KEY','THE LIGHTHOUSE FLASHED ITS CODE','CQD CAME BEFORE SOS EXISTED',
+];
+const drawMorseSentence=makeBag(MORSE_SENTENCES);
 class MorseMelody{
   constructor(){
     this.session=new Session();
@@ -20,26 +38,34 @@ class MorseMelody{
     this.track=new NoteTrack(this.cond);
     this.words=[];this.over=false;this.pendingDash=null;this.spaceDown=false;
     let b=8;
-    if(this.champ){ // real Morse timing: dot=1 unit, dash=3 units, letter gap=3, word gap=7 — and a full sentence
+    if(this.champ){ // real Morse timing: dot=1 unit, dash=3 units, letter gap=3, word gap=7 — three sentences from the bank
       this.unit=0.5; // a noticeably snappier unit than normal mode's ~1-beat dot
-      this.sentence=choice(MORSE_SENTENCES);
-      for(const w of this.sentence.split(' ')){
-        const wobj={word:w,notes:[],start:b};
-        for(let ci=0;ci<w.length;ci++){
-          const ch=w[ci],code=MORSE[ch];
-          for(let si=0;si<code.length;si++){
-            const sym=code[si],dur=sym==='.'?this.unit:this.unit*3;
-            const n=this.track.add({beat:b,key:'SPACE',kind:sym==='.'?'dot':'dash',
-              holdBeats:dur,letter:ch,ci,wordObj:wobj});
-            wobj.notes.push(n);
-            b+=dur;
-            if(si<code.length-1)b+=this.unit; // 1-unit gap between symbols in a letter
-          }
-          b+=this.unit*3; // 3-unit letter gap
-        }
-        wobj.end=b-this.unit*3;b+=this.unit*4; // top up to a full 7-unit word gap
-        this.words.push(wobj);
+      this.sentences=[];
+      while(this.sentences.length<3){
+        const s=drawMorseSentence();
+        if(!this.sentences.includes(s))this.sentences.push(s);
       }
+      this.sentence=this.sentences.join(' / '); // used for the results-screen row
+      this.sentences.forEach((sent,si)=>{
+        for(const w of sent.split(' ')){
+          const wobj={word:w,notes:[],start:b,sentIdx:si};
+          for(let ci=0;ci<w.length;ci++){
+            const ch=w[ci],code=MORSE[ch];
+            for(let si2=0;si2<code.length;si2++){
+              const sym=code[si2],dur=sym==='.'?this.unit:this.unit*3;
+              const n=this.track.add({beat:b,key:'SPACE',kind:sym==='.'?'dot':'dash',
+                holdBeats:dur,letter:ch,ci,wordObj:wobj});
+              wobj.notes.push(n);
+              b+=dur;
+              if(si2<code.length-1)b+=this.unit; // 1-unit gap between symbols in a letter
+            }
+            b+=this.unit*3; // 3-unit letter gap
+          }
+          wobj.end=b-this.unit*3;b+=this.unit*4; // top up to a full 7-unit word gap
+          this.words.push(wobj);
+        }
+        if(si<this.sentences.length-1)b+=this.unit*6; // extra pause between sentences
+      });
     }else{
       for(const w of shuffle(MORSE_WORDS).slice(0,5)){
         const wobj={word:w,notes:[],start:b};
@@ -100,7 +126,8 @@ class MorseMelody{
       grade:clean+'/'+tot+' WORDS CLEAN',gradeColor:clean>=tot*0.8?'#00d2be':clean>=tot*0.4?'#ffd400':'#e10600',
       score:s.score,points:Math.round(s.score/15)+clean*20,
       goalValue:clean,fullCombo:s.counts.miss===0,bestCombo:s.maxCombo,
-      rows:[[this.champ?'Sentence sent':'Words spelled',this.words.map(w=>w.word).join(' ')],
+      rows:[[this.champ?'Sentences sent':'Words spelled',
+          this.champ?this.sentences.join('  /  '):this.words.map(w=>w.word).join(' ')],
         ['Max combo',s.maxCombo],['Accuracy',s.accuracy.toFixed(1)+'%'],
         ['Misses',s.counts.miss]],
     });
@@ -185,17 +212,23 @@ class MorseMelody{
     drawHUD(ctx,this,this.champ?'SPACE: tap = dot · hold = dash — real Morse timing, no shortcuts':'SPACE: tap = dot · hold = dash');
     drawCount(ctx,beat);
   }
-  renderSentence(ctx){ // Champions: the full sentence, letters filling in as you send them
+  renderSentence(ctx){ // Champions: the CURRENT sentence only (of 3), letters filling in as you send them
+    const nx=this.track.next();
+    const curSentIdx=nx?nx.wordObj.sentIdx:this.sentences.length-1;
+    const sentWords=this.words.filter(w=>w.sentIdx===curSentIdx);
     ctx.textAlign='center';ctx.font=f(24,800);
     let totalW=0;
-    for(const w of this.words)totalW+=ctx.measureText(w.word).width+18;
+    for(const w of sentWords)totalW+=ctx.measureText(w.word).width+18;
     totalW-=18;
     const bw2=Math.min(W*0.9,totalW+40);
     ctx.fillStyle='rgba(10,14,26,.85)';
     ctx.beginPath();ctx.roundRect(W/2-bw2/2,H*0.055,bw2,50,12);ctx.fill();
     ctx.strokeStyle='rgba(0,210,190,.55)';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#8b94a7';ctx.font=f(11,700);
+    ctx.fillText('SENTENCE '+(curSentIdx+1)+' OF '+this.sentences.length,W/2,H*0.055-8);
+    ctx.font=f(24,800);
     let x=W/2-totalW/2,curCode=null,curCh=null;
-    for(const w of this.words){
+    for(const w of sentWords){
       for(let i=0;i<w.word.length;i++){
         const ch=w.word[i],notes=w.notes.filter(n=>n.ci===i);
         const done=notes.every(n=>n.judged&&!n.missed),bad=notes.some(n=>n.missed);
@@ -223,4 +256,3 @@ class MorseMelody{
       AE.pad(t,r+12,this.cond.spb*7,1);AE.bass(t,r,0.5,0.5);}
   }
 }
-

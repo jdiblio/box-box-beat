@@ -1,8 +1,14 @@
 /* PRINT HEAD HERO — a 3D printer builds a random object (F1 car, rocket,
  * trophy, violin, glider, or a Benchy boat) one horizontal slice per beat,
- * Stack-style. Each shape in PRINT_SHAPES is a width profile plus optional
- * asymmetric "feature" call-outs (wings, fins, handles). Champions adds a
- * colour-swap key — miss the swap and the wrong colour prints in.
+ * Stack-style. Each shape in PRINT_SHAPES is a width profile (r(t), 0=bottom
+ * 1=top) plus an optional asymmetric "feature" call-out (wings, wheels, fins,
+ * handles, wingspan) — the profiles are deliberately exaggerated (wide-narrow-
+ * wide for the car, a thin stem into a sudden wide cup for the trophy, one
+ * huge sideways flare for the glider's wingspan, etc.) so each object reads
+ * as genuinely different from the others instead of "a vase every time."
+ * Champions is the same shapes, just faster (Judge.bpmMul()) — there is no
+ * color-swap mechanic; an earlier version had one but it never read clearly
+ * (miss/ok layers always forced red/orange over it) so it's gone entirely.
  * Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
@@ -10,52 +16,55 @@
    one slice per beat, Stack-style. Misses shift the slices.
    ============================================================ */
 const PRINT_SHAPES=[ // each shape: r(t) is the main silhouette half-width 0..1 bottom→top;
-  // feature(i,LAYERS) optionally adds an asymmetric call-out (wing/handle/fin) at specific layers
+  // feature(i,LAYERS) optionally adds a symmetric call-out (wing/handle/fin/wheel) at specific layers
   {n:'F1 CAR',c:'#e10600',r:t=>{
-    if(t<0.06)return 0.5;
-    if(t<0.25)return 0.62;
-    if(t<0.55)return lerp(0.62,0.32,(t-0.25)/0.3);
-    if(t<0.72)return 0.28+0.05*Math.sin((t-0.55)/0.17*Math.PI);
-    if(t<0.85)return lerp(0.3,0.42,(t-0.72)/0.13);
-    return 0.42;
+    if(t<0.08)return 0.85; // front wing — wide flat base
+    if(t<0.22)return lerp(0.85,0.42,(t-0.08)/0.14); // taper up off the wing into the nose
+    if(t<0.65)return 0.4+0.06*Math.sin((t-0.22)/0.43*Math.PI); // low, wide sidepod body
+    if(t<0.8)return lerp(0.42,0.22,(t-0.65)/0.15); // taper to the cockpit
+    if(t<0.92)return 0.2; // halo / roll hoop
+    return lerp(0.2,0.85,(t-0.92)/0.08); // rear wing — flares wide again at the very top
   },feature:(i,L)=>{const t=i/L;
-    if(t<0.05)return{side:0,w:0.5}; // front wing
-    if(t>0.88)return{side:0,w:0.55}; // rear wing
+    if(t>0.28&&t<0.36)return{side:0,w:0.22}; // front wheels
+    if(t>0.52&&t<0.6)return{side:0,w:0.22}; // rear wheels
     return null;}},
   {n:'MOON ROCKET',c:'#7fd4ff',r:t=>{
-    if(t<0.12)return lerp(1,0.42,t/0.12);
-    if(t<0.75)return 0.4;
-    return Math.max(0.04,0.4*(1-(t-0.75)/0.25));
-  },feature:(i,L)=>{const t=i/L;return t<0.1?{side:0,w:0.35}:null;}}, // fin flare at the base
+    if(t<0.1)return lerp(0.55,0.32,t/0.1); // fin-flared base tapering up fast
+    if(t<0.78)return 0.3; // long straight body
+    if(t<0.92)return lerp(0.3,0.12,(t-0.78)/0.14); // shoulder into the nose
+    return lerp(0.12,0.02,(t-0.92)/0.08); // sharp pointed nose tip
+  },feature:(i,L)=>{const t=i/L;return t<0.1?{side:0,w:0.4}:null;}}, // fins flaring at the base
   {n:'GOLD TROPHY',c:'#ffd400',r:t=>{
-    if(t<0.08)return 0.8;
-    if(t<0.18)return lerp(0.8,0.22,(t-0.08)/0.1);
-    if(t<0.42)return 0.2;
-    if(t<0.68)return 0.2+0.5*Math.sin((t-0.42)/0.26*Math.PI);
-    return lerp(0.6,0.3,(t-0.68)/0.32);
-  },feature:(i,L)=>{const t=i/L;return(t>0.45&&t<0.62)?{side:0,w:0.28}:null;}}, // handles
+    if(t<0.08)return 0.55; // base
+    if(t<0.2)return lerp(0.55,0.13,(t-0.08)/0.12); // stem taper down
+    if(t<0.42)return 0.13; // thin stem
+    if(t<0.56)return lerp(0.13,0.75,(t-0.42)/0.14); // flares out into the cup
+    if(t<0.82)return 0.75; // wide cup body
+    return lerp(0.75,0.5,(t-0.82)/0.18); // cup rim
+  },feature:(i,L)=>{const t=i/L;return(t>0.48&&t<0.68)?{side:0,w:0.32}:null;}}, // handles on the cup
   {n:'VIOLIN',c:'#c9863c',r:t=>{
-    if(t<0.28)return 0.55+0.25*Math.sin(t/0.28*Math.PI); // lower bout
-    if(t<0.4)return lerp(0.55,0.32,(t-0.28)/0.12); // waist
-    if(t<0.62)return 0.32+0.28*Math.sin((t-0.4)/0.22*Math.PI); // upper bout
-    if(t<0.94)return lerp(0.34,0.1,(t-0.62)/0.32); // neck
-    return 0.16; // scroll
+    if(t<0.22)return 0.45+0.22*Math.sin(t/0.22*Math.PI); // lower bout
+    if(t<0.36)return lerp(0.55,0.24,(t-0.22)/0.14); // waist
+    if(t<0.56)return 0.24+0.26*Math.sin((t-0.36)/0.2*Math.PI); // upper bout (smaller than lower)
+    if(t<0.6)return 0.24; // shoulder
+    if(t<0.94)return lerp(0.14,0.05,(t-0.6)/0.34); // long thin neck
+    return 0.12; // scroll
   }},
   {n:'GLIDER',c:'#5cf2c8',r:t=>{
-    if(t<0.55)return 0.22;
-    if(t<0.62)return 0.22+0.1*Math.sin((t-0.55)/0.07*Math.PI); // canopy
-    if(t<0.9)return 0.2;
-    return lerp(0.2,0.45,(t-0.9)/0.1); // tail fin
-  },feature:(i,L)=>{const t=i/L;return(t>0.56&&t<0.63)?{side:0,w:1.35}:null;}}, // wingspan
+    if(t<0.5)return 0.12; // thin fuselage
+    if(t<0.56)return 0.12+0.04*Math.sin((t-0.5)/0.06*Math.PI); // canopy bump
+    if(t<0.88)return 0.11;
+    return lerp(0.11,0.3,(t-0.88)/0.12); // tail fin
+  },feature:(i,L)=>{const t=i/L;return(t>0.52&&t<0.58)?{side:0,w:2}:null;}}, // one huge wingspan flare
   {n:'BENCHY BOAT',c:'#8ec6ff',r:t=>{
-    if(t<0.12)return lerp(0.85,0.7,t/0.12); // hull
-    if(t<0.55)return 0.7;
-    if(t<0.68)return 0.7+0.12*Math.sin((t-0.55)/0.13*Math.PI);
-    if(t<0.9)return lerp(0.66,0.2,(t-0.68)/0.22);
-    return lerp(0.2,0.02,(t-0.9)/0.1); // pointed bow
-  },feature:(i,L)=>{const t=i/L;return(t>0.56&&t<0.66)?{side:0,w:0.14}:null;}}, // wheelhouse
+    if(t<0.1)return lerp(0.85,0.7,t/0.1); // wide boxy hull base
+    if(t<0.42)return 0.7; // hull
+    if(t<0.5)return lerp(0.7,0.3,(t-0.42)/0.08); // deck narrows sharply
+    if(t<0.72)return 0.3; // cabin band
+    if(t<0.88)return lerp(0.3,0.14,(t-0.72)/0.16); // bow taper begins
+    return lerp(0.14,0.02,(t-0.88)/0.12); // sharp pointed bow
+  },feature:(i,L)=>{const t=i/L;return(t>0.5&&t<0.58)?{side:0,w:0.16}:null;}}, // wheelhouse/cabin box
 ];
-const PRINT_PALETTE=['#e10600','#ffd400','#00d2be','#9f5cf2','#ff8a00'];
 class PrintHeadHero{
   constructor(){
     this.session=new Session();
@@ -65,17 +74,10 @@ class PrintHeadHero{
     this.track=new NoteTrack(this.cond);
     this.shape=choice(PRINT_SHAPES); // a different surprise every run
     this.LAYERS=48;this.layers=[];this.over=false;this.state='print';this.showT=0;
-    this.curColorIdx=0;this.swapMisses=0;
     for(let i=0;i<this.LAYERS;i++)
       this.track.add({beat:8+i,key:'SPACE',kind:'layer',layer:i});
-    if(this.champ){ // Champions: hit the swap key on beat to change the print colour — miss it and the flaw prints in
-      for(let i=6;i<this.LAYERS;i+=7)
-        this.track.add({beat:8+i+0.5,key:'C',kind:'swap'});
-    }
   }
-  get touchKeys(){return this.champ
-    ?[{k:'SPACE',label:'PRINT',big:true},{k:'C',label:'SWAP COLOR'}]
-    :[{k:'SPACE',label:'PRINT',big:true}];}
+  get touchKeys(){return[{k:'SPACE',label:'PRINT',big:true}];}
   start(){this.cond.patternFn=(s,t)=>this.music(s,t);this.cond.start(0.6);}
   vaseR(t){ // slice radius of the current shape, 0..1 bottom→top
     const s=Math.min(60,W*0.11);
@@ -83,15 +85,13 @@ class PrintHeadHero{
   }
   setLayer(i,j){
     const off=j==='perfect'?0:j==='good'?rand(1,2.5):j==='ok'?rand(3,6):rand(8,17);
-    this.layers[i]={off:off*(Math.random()<0.5?-1:1),j,age:0,
-      color:this.champ?PRINT_PALETTE[this.curColorIdx]:undefined};
+    this.layers[i]={off:off*(Math.random()<0.5?-1:1),j,age:0};
   }
   update(dt){
     if(this.over)return;
     const now=Game.judgedNow(),beat=this.cond.beat;
     for(const l of this.layers)if(l)l.age+=dt;
     this.track.sweep(now,Judge.win().ok,n=>{
-      if(n.kind==='swap'){this.swapMisses++;FX.text(W/2,H*0.25,'WRONG COLOR!','#e10600');return;} // stays on the old color
       Game.missAt(W/2,H*0.3);this.setLayer(n.layer,'miss');FX.kick(3);
     });
     // tempo ramps as the print grows
@@ -106,15 +106,7 @@ class PrintHeadHero{
     }
   }
   onKeyDown(k,t){
-    if(this.over||this.state!=='print')return;
-    if(k==='C'){
-      const sn=this.track.hit('C',t,Judge.win().ok);
-      if(!sn){AE.tick();return;}
-      this.curColorIdx=(this.curColorIdx+1)%PRINT_PALETTE.length;
-      FX.text(W/2,H*0.25,'COLOR SWAP!',PRINT_PALETTE[this.curColorIdx]);AE.boost();
-      return;
-    }
-    if(k!=='SPACE')return;
+    if(this.over||this.state!=='print'||k!=='SPACE')return;
     const n=this.track.hit('SPACE',t,Judge.win().ok);
     if(!n){AE.tick();this.session.combo=0;return;}
     const hx=W/2+((n.layer%2)?-1:1)*this.vaseR(n.layer/this.LAYERS);
@@ -143,7 +135,7 @@ class PrintHeadHero{
       goalValue:cr,fullCombo:s.counts.miss===0,bestCombo:s.maxCombo,
       rows:[['Object printed',this.shape.n],['Clean slices',cr.toFixed(0)+'%'],
         ['Max combo',s.maxCombo],['Accuracy',s.accuracy.toFixed(1)+'%'],
-        ['Misses',s.counts.miss]].concat(this.champ?[['Wrong-color layers',this.swapMisses]]:[]),
+        ['Misses',s.counts.miss]],
     });
   }
   drawObject(ctx,cx,baseY,scale,ghost){
@@ -161,9 +153,10 @@ class PrintHeadHero{
     for(let i=0;i<this.LAYERS;i++){
       const l=this.layers[i];if(!l)continue;
       const r=this.vaseR(i/this.LAYERS)*scale,y=baseY-i*lh*scale;
-      const drop=Math.max(0,1-l.age/0.15); // Stack-style drop-in
-      const yy=y-drop*14,rowH=Math.max(2,lh*scale-1),baseX=cx+l.off*scale;
-      const col=l.j==='miss'?'#e10600':l.j==='ok'?'#ff8a00':(l.color||this.shape.c);
+      const dropT=clamp(l.age/0.18,0,1),eased=1-Math.pow(1-dropT,3); // smoother ease-out drop-in
+      const yy=y-(1-eased)*18,rowH=Math.max(2,lh*scale-1),baseX=cx+l.off*scale;
+      const clean=Math.abs(l.off)<1;
+      const col=l.j==='miss'?'#e10600':l.j==='ok'?'#ff8a00':this.shape.c;
       ctx.fillStyle=col;ctx.globalAlpha=l.j==='good'?0.85:0.95;
       ctx.fillRect(baseX-r,yy,r*2,rowH);
       const feat=this.shape.feature&&this.shape.feature(i,this.LAYERS); // wing/handle/fin call-out
@@ -171,6 +164,14 @@ class PrintHeadHero{
         const fw=feat.w*Math.min(60,W*0.11)*scale;
         if(feat.side<=0)ctx.fillRect(baseX-r-fw,yy,fw,rowH);
         if(feat.side>=0)ctx.fillRect(baseX+r,yy,fw,rowH);
+      }
+      ctx.globalAlpha=1;
+      if(clean){ // clean layer: a thin bright rim so accuracy is visible at a glance
+        ctx.strokeStyle='rgba(0,210,190,.55)';ctx.lineWidth=1;
+        ctx.strokeRect(baseX-r,yy,r*2,rowH);
+      }else if(l.j==='miss'){ // messy layer: a dashed red outline makes the flaw obvious
+        ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
+        ctx.strokeRect(baseX-r,yy,r*2,rowH);ctx.setLineDash([]);
       }
       if(l.age<0.3){ // fresh-slice flash
         ctx.globalAlpha=(1-l.age/0.3)*0.8;
@@ -184,15 +185,25 @@ class PrintHeadHero{
     const now=Game.judgedNow(),beat=this.cond.beat;
     bgWorkshop(ctx);
     if(this.state==='show'){
-      ctx.textAlign='center';ctx.fillStyle='#eef1f6';ctx.font=f(28);
+      const cr=this.cleanRate()*100;
+      const gc=cr>=92?'#00d2be':cr>=75?'#ffd400':cr>=50?'#8b94a7':'#e10600';
+      const glowP=0.3+beatPulse(this.cond)*0.15;
+      const g=ctx.createRadialGradient(W/2,H*0.5,20,W/2,H*0.5,Math.min(W,H)*0.5);
+      g.addColorStop(0,gc+Math.round(glowP*80).toString(16).padStart(2,'0'));
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+      ctx.textAlign='center';ctx.fillStyle='#eef1f6';ctx.font=f(30,900);
       ctx.fillText('PRINT COMPLETE!',W/2,H*0.1);
-      ctx.fillStyle=this.shape.c;ctx.font=f(22);
-      ctx.fillText(this.shape.n,W/2,H*0.16);
+      ctx.fillStyle=this.shape.c;ctx.font=f(24,800);
+      ctx.fillText(this.shape.n,W/2,H*0.17);
       ctx.fillStyle='#242b3a';ctx.beginPath(); // pedestal
       ctx.roundRect(W/2-90,H*0.84,180,16,6);ctx.fill();
+      ctx.strokeStyle=gc;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(W/2-90,H*0.84,180,16,6);ctx.stroke();
+      const bob=Math.sin(idleT*1.4)*4,tilt=Math.sin(idleT*0.9)*0.02; // gentle showcase bob/tilt
+      ctx.save();ctx.translate(W/2,0);ctx.rotate(tilt);ctx.translate(-W/2,bob);
       this.drawObject(ctx,W/2,H*0.83,1.35,false);
-      const cr=this.cleanRate()*100;
-      ctx.fillStyle=cr>=75?'#00d2be':cr>=50?'#ffd400':'#e10600';ctx.font=f(22);
+      ctx.restore();
+      ctx.fillStyle=gc;ctx.font=f(24,900);
       ctx.fillText(cr.toFixed(0)+'% CLEAN SLICES',W/2,H*0.93);
       return;
     }
@@ -257,21 +268,7 @@ class PrintHeadHero{
     ctx.textAlign='right';ctx.fillText(this.cond.bpm+' BPM',fr,H*0.1);
     ctx.textAlign='center';ctx.fillStyle=this.shape.c;ctx.font=f(16);
     ctx.fillText('NOW PRINTING: '+this.shape.n,W/2,ft-24);
-    if(this.champ){ // current colour swatch + upcoming swap warning
-      ctx.fillStyle=PRINT_PALETTE[this.curColorIdx];
-      ctx.fillRect(fl,H*0.14,18,18);ctx.strokeStyle='#eef1f6';ctx.lineWidth=1.5;ctx.strokeRect(fl,H*0.14,18,18);
-      ctx.textAlign='left';ctx.fillStyle='#8b94a7';ctx.font=f(11,700);
-      ctx.fillText('CURRENT COLOR',fl+24,H*0.14+14);
-      const nextSwap=this.track.notes.find(n=>n.kind==='swap'&&!n.judged);
-      if(nextSwap){
-        const dt2=this.cond.beatToTime(nextSwap.beat)-now;
-        if(dt2<2&&dt2>-0.3){
-          ctx.textAlign='center';ctx.fillStyle='#ffd400';ctx.font=f(15,800);
-          ctx.fillText('PRESS C TO SWAP COLOR!',W/2,H*0.2);
-        }
-      }
-    }
-    drawHUD(ctx,this,this.champ?'SPACE on the beat · C to swap the print color':'SPACE on every beat — drop each slice like STACK');
+    drawHUD(ctx,this,'SPACE on every beat — drop each slice like STACK');
     drawCount(ctx,beat);
   }
   music(step,t){
@@ -284,4 +281,3 @@ class PrintHeadHero{
     if(i%4===1)AE.lead(t,root+[12,15,19,22][(i>>2)%4],0.08,0.55,'sawtooth');
   }
 }
-

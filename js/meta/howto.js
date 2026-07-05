@@ -49,23 +49,21 @@ const HOWTO={
       ['TIP','Both of you get the exact same notes at the exact same time, at whatever difficulty is set in Settings']]},
 };
 const CHAMP_HOWTO={ // appended to the normal how-to-play text when the Champions difficulty is active
-  tkd:{goalSuffix:' CHAMPIONS: climb from I DEGREE to IX DEGREE black belt, each one a different colour — watch for linked pairs, two keys pressed at the exact same instant.',
+  tkd:{goalSuffix:' CHAMPIONS: climb from I DEGREE to IX DEGREE black belt, each one a different colour. Speed matches the normal belts (I-III as fast as BLUE, IV-VI as fast as RED, VII-IX as fast as BLACK) — what makes it hard is the combos: linked pairs, two keys pressed at the exact same instant.',
     extraSteps:[['TIP','A linked pair like K + L must be pressed together, at once — not one after the other']]},
-  morse:{goalSuffix:' CHAMPIONS: send a full SENTENCE, word by word, at a much faster tap speed, using real Morse timing (dash = 3x a dot).',
-    extraSteps:[['TIP','The sentence fills in letter by letter at the top — watch the big dot/dash readout for what to send next']]},
   pitcrew:{goalSuffix:' CHAMPIONS: sometimes TWO cars stack up at once — alternate between them. Watch for jammed guns that need a rapid double tap.',
     extraSteps:[['TIP','A jammed wheel flashes orange — tap that key twice, fast, to clear it']]},
-  typing:{goalSuffix:' CHAMPIONS: type a full real sentence with punctuation — capital letters need SHIFT held, some letter pairs are COMBOS pressed at once, and the text blacks out sometimes.',
-    extraSteps:[['SHIFT','Hold it down while pressing a letter that should be capitalised'],
-      ['COMBO','Two letters marked together must be pressed at the exact same instant'],
-      ['TIP','When it blacks out, keep typing from what you already read']]},
+  morse:{goalSuffix:' CHAMPIONS: send THREE sentences back to back, drawn from a Morse/telegraph-themed bank, using real Morse timing (dash = 3x a dot).',
+    extraSteps:[['TIP','Each sentence fills in letter by letter at the top — watch the big dot/dash readout for what to send next']]},
+  typing:{goalSuffix:' CHAMPIONS: type a full racing-themed sentence, one lowercase letter at a time, right on the beat — no SHIFT, no combos, just a slower and steadier pace than the lane mode, though the text still blacks out sometimes.',
+    extraSteps:[['TIP','When it blacks out, keep typing from what you already read']]},
   drums:{goalSuffix:' CHAMPIONS: two new advanced 16th-note/offbeat lessons, plus a SOLO CHALLENGE — improvise freely but keep the kick locked to the beat.',
     extraSteps:[['6 · 7','Advanced lessons: Funk 16ths and Offbeat Hats'],
       ['8','Solo Challenge — freeform jam, graded on kicks landing on the beat']]},
   kitchen:{goalSuffix:' CHAMPIONS: the kitchen runs hot from the very first order — every tempo step is noticeably faster than normal.',
     extraSteps:[['TIP','The pace keeps climbing with every order — stay locked to the beat or the burns pile up fast']]},
-  printer:{goalSuffix:' CHAMPIONS: hit C on the color-swap cue to change the filament — miss it and the wrong color prints into the object.',
-    extraSteps:[['C','Swap the print color right on the cue']]},
+  printer:{goalSuffix:' CHAMPIONS: the printer runs hot from the start — every tempo step is noticeably faster than normal.',
+    extraSteps:[]},
 };
 function howtoInfo(MC){
   if(MC===Calibration)return Object.assign({icon:'🎯',name:'TIMING CALIBRATION'},HOWTO.calib);
