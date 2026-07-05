@@ -25,8 +25,8 @@ function refreshSettings(){
   const devOn=MODES.every(m=>Store.data.beaten[m.id]);
   $('#dev-hint').classList.toggle('dev-on',devOn);
   $('#dev-hint').textContent=devOn
-    ?'✅ DEV MODE ON — unlimited points, every mode and Champions unlocked'
-    :'testing tool: unlocks every mode (and Champions) and sets points to 999,999,999';
+    ?'✅ DEV MODE ON — unlimited points, every mode & Champions unlocked, pick any Champions mode individually from 🏆 Championship'
+    :'testing tool: unlocks every mode (and Champions), sets points to 999,999,999, and lets you pick any mode individually from Championship';
 }
 
 /* ================= BOOT + MAIN LOOP ================= */
@@ -115,6 +115,8 @@ function wire(){
     Store.data.points=999999999;
     Store.data.lifetimePoints=Math.max(Store.data.lifetimePoints||0,999999999);
     for(const m of MODES)Store.data.beaten[m.id]=true;
+    Store.data.difficulty='champions';
+    Store.data.champCompleted=true; // as if a season's already been finished — lets you pick any mode individually from the Championship screen
     Store.save();refreshSettings();
   };
   $('#b-reset').onclick=e=>{
