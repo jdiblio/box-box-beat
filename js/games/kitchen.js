@@ -121,24 +121,24 @@ class KitchenRush{
       ctx.fillText(COOK_LABEL[key],x,H*0.79);
       ctx.font=f(18);ctx.fillText(COOK_ARROW[key],x,H*0.84);
     }
-    // falling prompts — big, glowing, impossible to miss, and sized off the
-    // screen width (not a flat pixel count) so they stay huge on any display
+    // falling prompts — glowing and easy to read, but sized to actually land
+    // inside the station's ring below instead of overshooting it
     for(const n of this.track.notes){
       if(n.judged&&!n.missed)continue;
       const y=H*0.7-(this.cond.beatToTime(n.beat)-now)/this.cond.spb*H*0.16;
       if(y<H*0.08||y>H*0.78)continue;
-      const x=this.laneX(n.key),r=Math.min(78,W*0.115);
+      const x=this.laneX(n.key),r=this.stationR(p);
       const glowCol=n.missed?'#ff2d2d':n.order.burned?'#5a6478':COOK_COL[n.key];
       ctx.save();
-      ctx.shadowColor=glowCol;ctx.shadowBlur=30;
+      ctx.shadowColor=glowCol;ctx.shadowBlur=16;
       ctx.beginPath();ctx.arc(x,y,r,0,6.283);
       ctx.fillStyle=n.missed?'rgba(225,6,0,.45)':n.order.burned?'#39435a':'#12161f';ctx.fill();
-      ctx.lineWidth=6;ctx.strokeStyle=n.missed?'#ff2d2d':'#ffd400';ctx.stroke();
+      ctx.lineWidth=4;ctx.strokeStyle=n.missed?'#ff2d2d':'#ffd400';ctx.stroke();
       ctx.shadowBlur=0;
-      ctx.lineWidth=3;ctx.strokeStyle=glowCol;
-      ctx.beginPath();ctx.arc(x,y,r-9,0,6.283);ctx.stroke();
-      ctx.fillStyle='#eef1f6';ctx.font=f(Math.min(64,W*0.095),900);ctx.textAlign='center';
-      ctx.fillText(COOK_ARROW[n.key],x,y+18);
+      ctx.lineWidth=2;ctx.strokeStyle=glowCol;
+      ctx.beginPath();ctx.arc(x,y,r-6,0,6.283);ctx.stroke();
+      ctx.fillStyle='#eef1f6';ctx.font=f(Math.min(30,W*0.044),900);ctx.textAlign='center';
+      ctx.fillText(COOK_ARROW[n.key],x,y+10);
       ctx.restore();
     }
     // order ticket + sliding steps strip
@@ -208,10 +208,11 @@ class KitchenRush{
     const bob=Math.sin(idleT*1.6)*3;
     this.renderDishArt(ctx,o.dish,o.burned,cx,cy+bob,0.6+slideP*0.4,rot,1);
   }
+  stationR(beatP){return Math.min(40,W*0.058)+beatP*4;} // shared radius so falling prompts land exactly inside this ring
   renderStation(ctx,key,x,y,beatP){ // Cooking-Mama style prep station: idle art + live action animation
     const hitT=this.laneHitT[key],ok=this.laneOk[key];
     ctx.save();ctx.translate(x,y);
-    ctx.beginPath();ctx.arc(0,0,30+beatP*4,0,6.283); // ambient beat ring
+    ctx.beginPath();ctx.arc(0,0,this.stationR(beatP),0,6.283); // ambient beat ring
     ctx.strokeStyle='rgba(255,212,0,'+(0.25+beatP*0.35)+')';ctx.lineWidth=2;ctx.stroke();
     if(key==='UP')this.renderPanStation(ctx,this.laneSlide[key]-22,hitT,ok);
     else if(key==='DOWN')this.renderBoardStation(ctx,this.laneSlide[key]-22,hitT,ok);

@@ -1,7 +1,9 @@
 /* TAEKWONDO COMBOS — belt by belt (White..Black), landing 70%+ of the moves to
- * advance. On Champions difficulty the belts extend to 1st-9th Degree Black
- * Belt and some notes require two keys pressed at the exact same instant
- * (checked against Input.held, not just a single keydown event).
+ * advance. On Champions difficulty the belts extend through nine Black Belt
+ * degrees — titled in roman numerals (I DEGREE .. IX DEGREE) and each with
+ * its own colour so the climb is unmistakable at a glance, not just a wall
+ * of text — and some notes require two keys pressed at the exact same
+ * instant (checked against Input.held, not just a single keydown event).
  * Depends on: core/*.js, art/backgrounds.js. */
 'use strict';
 /* ============================================================
@@ -11,8 +13,10 @@ const BELTS=[
   {n:'WHITE',c:'#eeeeee',bpm:92},{n:'YELLOW',c:'#ffd400',bpm:102},
   {n:'GREEN',c:'#35c04f',bpm:112},{n:'BLUE',c:'#2f7df6',bpm:124},
   {n:'RED',c:'#e10600',bpm:136},{n:'BLACK',c:'#666a75',bpm:150}];
-const BELTS_CHAMP=['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'].map((o,i)=>(
-  {n:o+' DEGREE BLACK BELT',c:'#f2c14e',bpm:150+i*11,dbl:0.32+i*0.045,combo:0.1+i*0.05}));
+const ROMAN_NUMERALS=['I','II','III','IV','V','VI','VII','VIII','IX'];
+const DEGREE_COLORS=['#f2c14e','#eeb23e','#eaa32e','#e6941e','#e2850e','#de6f0a','#da5906','#d64302','#e10600'];
+const BELTS_CHAMP=ROMAN_NUMERALS.map((r,i)=>(
+  {n:r+' DEGREE BLACK BELT',c:DEGREE_COLORS[i],bpm:150+i*11,dbl:0.32+i*0.045,combo:0.1+i*0.05}));
 const TKD_KEYS=['J','K','L'];
 const TKD_NAME={J:'PUNCH',K:'KICK',L:'BLOCK'};
 const TKD_COL={J:'#e10600',K:'#ffd400',L:'#2f7df6'};
@@ -114,11 +118,11 @@ class Taekwondo{
     const s=this.session,b=Math.min(this.belt,this.beltsArr.length-1);
     Game.endMode({
       modeId:'tkd',title:'TAEKWONDO COMBOS',
-      grade:won?(this.champ?'9TH DEGREE GRANDMASTER':'BLACK BELT MASTER'):this.beltsArr[b].n,
+      grade:won?(this.champ?'IX DEGREE GRANDMASTER':'BLACK BELT MASTER'):this.beltsArr[b].n,
       gradeColor:won?'#00d2be':this.beltsArr[b].c,
       score:s.score,points:Math.round(s.score/15)+(won?200:0),
       goalValue:this.belt,fullCombo:s.counts.miss===0,bestCombo:s.maxCombo,
-      rows:[['Belt reached',won?(this.champ?'9th Degree (complete)':'BLACK (complete)'):this.beltsArr[b].n],
+      rows:[['Belt reached',won?(this.champ?'IX Degree (complete)':'BLACK (complete)'):this.beltsArr[b].n],
         ['Max combo',s.maxCombo],['Accuracy',s.accuracy.toFixed(1)+'%'],
         ['Misses',s.counts.miss]],
     });

@@ -49,7 +49,7 @@ const HOWTO={
       ['TIP','Both of you get the exact same notes at the exact same time, at whatever difficulty is set in Settings']]},
 };
 const CHAMP_HOWTO={ // appended to the normal how-to-play text when the Champions difficulty is active
-  tkd:{goalSuffix:' CHAMPIONS: climb from 1st to 9th DEGREE black belt — watch for linked pairs, two keys pressed at the exact same instant.',
+  tkd:{goalSuffix:' CHAMPIONS: climb from I DEGREE to IX DEGREE black belt, each one a different colour — watch for linked pairs, two keys pressed at the exact same instant.',
     extraSteps:[['TIP','A linked pair like K + L must be pressed together, at once — not one after the other']]},
   morse:{goalSuffix:' CHAMPIONS: send a full SENTENCE, word by word, at a much faster tap speed, using real Morse timing (dash = 3x a dot).',
     extraSteps:[['TIP','The sentence fills in letter by letter at the top — watch the big dot/dash readout for what to send next']]},
